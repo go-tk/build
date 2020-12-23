@@ -8,8 +8,8 @@ BUILD_TTL='24 hours'
 if [[ -f ${BUILD_DIR}/EXPIRATION_DATE ]] && [[ $(<${BUILD_DIR}/EXPIRATION_DATE) -le $(date +%s) ]]; then
 	rm --recursive --force ${BUILD_DIR}
 fi
-if [[ ! -d ${BUILD_DIR} ]]; then
+if [[ ! -d ${BUILD_DIR}/.git ]]; then
 	git clone --depth=1 https://github.com/go-tk/build.git ${BUILD_DIR}
 	date --date="+${BUILD_TTL}" +%s >${BUILD_DIR}/EXPIRATION_DATE
 fi
-gmake --makefile=${BUILD_DIR}/go.mk "$@"
+make --makefile=${BUILD_DIR}/go.mk "$@"
