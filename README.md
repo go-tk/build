@@ -26,7 +26,7 @@ Generic Makefile for Go projects
 
   *Custom command-line options could be provided via variable `TESTFLAGS`.*
 
-- **clean**: Remove object files and the build directory.
+- **clean**: Remove object files and cache files.
 
 ## Quick Start
 

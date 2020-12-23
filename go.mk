@@ -29,7 +29,7 @@ test:
 .PHONY: clean
 clean:
 	go clean
-	rm --recursive --force $(build_dir)
+	cd $(build_dir) && git clean -dfx --exclude=/EXPIRATION_DATE
 
 $(build_dir)%.goimports: %.go | $(build_dir)bin/goimports
 	$(build_dir)bin/goimports -format-only -w $(IMPORTSFLAGS) $< && install -D --mode=a=r /dev/null $@
