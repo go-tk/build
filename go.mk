@@ -5,39 +5,43 @@ override sources := $(shell find -path '*/.*' -prune -o -type f -name '*.go' -pr
 endif
 override build_dir := $(dir $(lastword $(MAKEFILE_LIST)))
 
+.PHONY: all
 all: generate imports lint vet test
 
-generate: force
+.PHONY: generate
+generate:
 	go generate $(GENERATEFLAGS) ./...
 
-imports: force $(build_dir)bin/goimports $(sources:%.go=$(build_dir)%.goimports)
+.PHONY: imports
+imports: $(sources:%.go=$(build_dir)%.goimports)
 
-lint: force $(build_dir)bin/golint $(sources:%.go=$(build_dir)%.golint)
+.PHONY: lint
+lint: $(sources:%.go=$(build_dir)%.golint)
 
-vet: force
+.PHONY: vet
+vet:
 	go vet $(VETFLAGS) ./...
 
-test: force
+.PHONY: test
+test:
 	go test $(TESTFLAGS) ./...
 
-clean: force
+.PHONY: clean
+clean:
 	go clean
 	rm --recursive --force $(build_dir)
+
+$(build_dir)%.goimports: %.go | $(build_dir)bin/goimports
+	$(build_dir)bin/goimports -format-only -w $(IMPORTSFLAGS) $< && install -D --mode=a=r /dev/null $@
 
 $(build_dir)bin/goimports: | $(build_dir)go.mod
 	cd $(build_dir) && go build -o bin/goimports golang.org/x/tools/cmd/goimports
 
-$(build_dir)%.goimports: %.go
-	$(build_dir)bin/goimports -format-only -w $(IMPORTSFLAGS) $< && install -D --mode=a=r /dev/null $@
+$(build_dir)%.golint: %.go | $(build_dir)bin/golint
+	GOLINT=$(build_dir)bin/golint $(build_dir)scripts/golint-wrapper.bash $(LINTFLAGS) $< && install -D --mode=a=r /dev/null $@
 
 $(build_dir)bin/golint: | $(build_dir)go.mod
 	cd $(build_dir) && go build -o bin/golint golang.org/x/lint/golint
 
-$(build_dir)%.golint: %.go
-	GOLINT=$(build_dir)bin/golint $(build_dir)scripts/golint-wrapper.bash $(LINTFLAGS) $< && install -D --mode=a=r /dev/null $@
-
 $(build_dir)go.mod:
 	cd $(build_dir) && go mod init build
-
-.PHONY: force
-force:
