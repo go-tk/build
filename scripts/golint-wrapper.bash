@@ -5,6 +5,7 @@ set -o errexit -o nounset -o pipefail +o xtrace
 exit_code=0
 while read issue; do
 	if [[ ${issue} =~ ^(.*/)?internal/.*\.go: ]]; then
+		# go file in internal package
 		if [[ ${issue} =~ should\ have\ comment\ or\ be\ unexported ]]; then
 			continue
 		fi

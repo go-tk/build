@@ -2,17 +2,43 @@
 
 Generic Makefile for Go projects
 
+## Targets
+
+- **all**: The combination of target **generate**, **imports**, **lint**, **vet** and **test**.
+
+- **generate**: Generate files with command `go generate`.
+
+  *Custom command-line options could be provided via variable `GENERATEFLAGS`.*
+
+- **imports**: Format source code with command `goimports`.
+
+  *Custom command-line options could be provided via variable `IMPORTSFLAGS`.*
+
+- **lint**: Check the coding style with command `golint`.
+
+  *Custom command-line options could be provided via variable `LINTFLAGS`.*
+
+- **vet**: Examine source code with command `go vet`.
+
+  *Custom command-line options could be provided via variable `VETFLAGS`.*
+
+- **test**: Test packages with command `go test`.
+
+  *Custom command-line options could be provided via variable `TESTFLAGS`.*
+
+- **clean**: Remove object files and the build directory.
+
 ## Quick Start
 
-```bash
-cd PATH/TO/PROJECT/DIR
+1. ```bash
+   cd PATH/TO/PROJECT/DIR
+   ```
 
-tee make.sh <<-EOF
-	#!/usr/bin/env sh
+2. ```bash
+   curl -Lo make.bash https://raw.githubusercontent.com/go-tk/build/master/make.bash.orig
+   chmod +x make.bash
+   ```
 
-	(test -d build || git clone --depth 1 https://github.com/go-tk/build.git) && gmake -f build/go.mk "\$@"
-EOF
-chmod +x make.sh
-
-./make.sh all
-```
+3. ```bash
+   ./make.bash all TESTFLAGS=-v
+   ```
