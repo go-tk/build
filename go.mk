@@ -3,7 +3,10 @@ override SHELL := /usr/bin/env bash -euxo pipefail
 override sources := $(shell find -path '*/.*' -prune -o -type f -name '*.go' -printf '%P\n')
 override build_dir := $(dir $(lastword $(MAKEFILE_LIST)))
 
-all: imports lint vet test
+all: generate imports lint vet test
+
+generate: force
+	go generate $(GENERATEFLAGS) ./...
 
 imports: force $(build_dir)bin/goimports $(sources:%.go=$(build_dir)%.goimports)
 
