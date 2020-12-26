@@ -7,6 +7,7 @@ while read suggestion; do
 	if [[ ${suggestion} =~ ^(.*/)?internal/.*\.go: ]]; then
 		# go file in internal package
 		if [[ ${suggestion} =~ should\ have\ comment\ or\ be\ unexported ]]; then
+			# ignore this suggestion
 			continue
 		fi
 	fi

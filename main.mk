@@ -2,8 +2,6 @@ override SHELL := bash
 override .SHELLFLAGS := -o errexit -o nounset -o pipefail -o xtrace -c
 
 override build_dir := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
-override go_dirs := $(shell go list -f {{.Dir}} ./... | xargs realpath --relative-to=.)
-override go_files := $(foreach go_dir,$(go_dirs),$(wildcard $(go_dir)/*.go))
 
 .PHONY: all
 all: generate fmt lint vet test
@@ -14,11 +12,17 @@ generate:
 
 .PHONY: fmt
 fmt: | $(build_dir)/bin/goimports
-	$(build_dir)/bin/goimports -format-only -w $(GOIMPORTS_FLAGS) $(go_files)
+	@go fmt -n ./... | grep --perl-regexp --only-matching '[^ ]+$$' | xargs $| -format-only -l -w $(GOIMPORTS_FLAGS)
+
+$(build_dir)/bin/goimports: | $(build_dir)/go.mod
+	@cd $(build_dir); go build -o bin/goimports golang.org/x/tools/cmd/goimports
 
 .PHONY: lint
 lint: | $(build_dir)/bin/golint
-	@$(build_dir)/bin/golint $(filter-out -set_exit_status,$(GOLINT_FLAGS)) ./... | $(build_dir)/scripts/golint-filter.bash
+	@$| $(filter-out -set_exit_status,$(GOLINT_FLAGS)) ./... | $(build_dir)/scripts/golint-filter.bash
+
+$(build_dir)/bin/golint: | $(build_dir)/go.mod
+	@cd $(build_dir); go build -o bin/golint golang.org/x/lint/golint
 
 .PHONY: vet
 vet:
@@ -30,13 +34,7 @@ test:
 
 .PHONY: clean
 clean:
-	@go clean
-
-$(build_dir)/bin/goimports: | $(build_dir)/go.mod
-	@cd $(build_dir); go build -o bin/goimports golang.org/x/tools/cmd/goimports
-
-$(build_dir)/bin/golint: | $(build_dir)/go.mod
-	@cd $(build_dir); go build -o bin/golint golang.org/x/lint/golint
+	@go clean $(GO_CLEAN_FLAGS) ./...
 
 $(build_dir)/go.mod:
 	@cd $(build_dir); go mod init build
