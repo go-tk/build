@@ -12,7 +12,7 @@ generate:
 
 .PHONY: fmt
 fmt: | $(build_dir)/bin/goimports
-	@go fmt -n ./... | grep --perl-regexp --only-matching '[^ ]+$$' | xargs $| -format-only -l -w $(GOIMPORTS_FLAGS)
+	@go fmt -n ./... | grep --perl-regexp --only-matching '(?<=^| )[^ ]+\.go(?=$$| )' | xargs $| -format-only -l -w $(GOIMPORTS_FLAGS)
 
 $(build_dir)/bin/goimports: | $(build_dir)/go.mod
 	@cd $(build_dir); go build -o bin/goimports golang.org/x/tools/cmd/goimports
