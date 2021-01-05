@@ -2,34 +2,6 @@
 
 Generic makefile for Go projects
 
-## Targets
-
-- `all`: The combination of following targets except `clean`.
-
-- `generate`: Generate files with command 'go generate'.
-
-  *Custom command-line options could be provided via variable GO_GENERATE_FLAGS.*
-
-- `fmt`: Format source code with command 'goimports'.
-
-  *Custom command-line options could be provided via variable GOIMPORTS_FLAGS.*
-
-- `lint`: Check the coding style with command 'golint'.
-
-  *Custom command-line options could be provided via variable GOLINT_FLAGS.*
-
-- `vet`: Examine source code with command 'go vet'.
-
-  *Custom command-line options could be provided via variable GO_VET_FLAGS.*
-
-- `test`: Test packages with command 'go test'.
-
-  *Custom command-line options could be provided via variable GO_TEST_FLAGS.*
-
-- `clean`: Remove object files with command 'go clean'.
-
-  *Custom command-line options could be provided via variable GO_CLEAN_FLAGS.*
-
 ## Quick Start
 
 1. ```bash
@@ -41,5 +13,5 @@ Generic makefile for Go projects
    ```
 
 3. ```bash
-   make all GO_TEST_FLAGS='-count=1 -v'
+   make help
    ```
