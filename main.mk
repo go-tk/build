@@ -11,13 +11,13 @@ override targets := $(or $(MAKECMDGOALS),$(.DEFAULT_GOAL))
 .PHONY: $(targets)
 .ONESHELL:
 $(targets):
-	export BUILD_DIR=$(build_dir)/docker
-	@cp go.{mod,sum} $${BUILD_DIR}
+	@export BUILD_DIR=$(build_dir)/docker
+	cp go.{mod,sum} $${BUILD_DIR}
 	export COMPOSE_FILE=$${BUILD_DIR}/docker-compose.yml$${COMPOSE_FILE:+$${COMPOSE_PATH_SEPARATOR:-:}$${COMPOSE_FILE}}
 	export COMPOSE_PROJECT_NAME=$${COMPOSE_PROJECT_NAME:-$(notdir $(CURDIR))}
-	trap "docker-compose down --rmi=local --remove-orphans" EXIT
+	trap "docker-compose down --rmi=local --volumes --remove-orphans" EXIT
 	docker-compose build
-	docker-compose run --rm build make $(MFLAGS) USE_DOCKER= _BUILD_DIR=$${BUILD_DIR} --makefile=$(makefile) $@
+	docker-compose run --rm build make $(MFLAGS) --makefile=$(makefile) $@ $(MAKEOVERRIDES) USE_DOCKER= _BUILD_DIR=$${BUILD_DIR}
 
 else ###############################################################################################
 _BUILD_DIR := $(build_dir)
