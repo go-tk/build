@@ -1,0 +1,15 @@
+version: "3.3"
+services:
+  build:
+    build:
+      context: .
+      cache_from:
+        - ${COMPOSE_PROJECT_NAME}-build:latest
+    image: ${COMPOSE_PROJECT_NAME}-build:latest
+    volumes:
+      - type: bind
+        source: ../..
+        target: /data
+    environment:
+      - CGO_ENABLED=0
+      - GOCACHE=/data/${BUILD_DIR}/cache
