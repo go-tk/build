@@ -13,3 +13,4 @@ services:
     environment:
       - CGO_ENABLED=0
       - GOCACHE=/data/${BUILD_DIR}/cache
+      - GOMODCACHE=/data/${BUILD_DIR}/mod-cache

@@ -12,7 +12,6 @@ override targets := $(or $(MAKECMDGOALS),$(.DEFAULT_GOAL))
 .ONESHELL:
 $(targets):
 	@export BUILD_DIR=$(build_dir)/docker
-	cp go.{mod,sum} $${BUILD_DIR}/context
 	export COMPOSE_FILE=$${BUILD_DIR}/docker-compose.yml$${COMPOSE_FILE:+$${COMPOSE_PATH_SEPARATOR:-:}$${COMPOSE_FILE}}
 	export COMPOSE_PROJECT_NAME=$${COMPOSE_PROJECT_NAME:-$(notdir $(CURDIR))}
 	trap 'docker-compose down --rmi=local --volumes --remove-orphans' EXIT
