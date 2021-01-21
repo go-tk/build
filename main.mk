@@ -12,10 +12,10 @@ override targets := $(or $(MAKECMDGOALS),$(.DEFAULT_GOAL))
 .ONESHELL:
 $(targets):
 	@export BUILD_DIR=$(build_dir)/docker
-	cp go.{mod,sum} $${BUILD_DIR}
+	cp go.{mod,sum} $${BUILD_DIR}/context
 	export COMPOSE_FILE=$${BUILD_DIR}/docker-compose.yml$${COMPOSE_FILE:+$${COMPOSE_PATH_SEPARATOR:-:}$${COMPOSE_FILE}}
 	export COMPOSE_PROJECT_NAME=$${COMPOSE_PROJECT_NAME:-$(notdir $(CURDIR))}
-	trap "docker-compose down --rmi=local --volumes --remove-orphans" EXIT
+	trap 'docker-compose down --rmi=local --volumes --remove-orphans' EXIT
 	docker-compose build
 	docker-compose run --rm build make $(MFLAGS) --makefile=$(makefile) $@ $(MAKEOVERRIDES) USE_DOCKER= _BUILD_DIR=$${BUILD_DIR}
 
@@ -91,7 +91,7 @@ help:
 	@sed -n 's/^##//p' $(makefile)
 
 $(_BUILD_DIR)/bin/go.mod:
-	@mkdir --parents $(@D); cd $(@D); go mod init bin
+	@mkdir -p $(@D); cd $(@D); go mod init bin
 
 ##
 ##example:
