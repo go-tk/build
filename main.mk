@@ -16,7 +16,8 @@ $(targets):
 	export COMPOSE_PROJECT_NAME=$${COMPOSE_PROJECT_NAME:-$(notdir $(CURDIR))}
 	trap 'docker-compose down --rmi=local --volumes --remove-orphans' EXIT
 	docker-compose build
-	docker-compose run --rm build make $(MFLAGS) --makefile=$(makefile) $@ $(MAKEOVERRIDES) USE_DOCKER= _BUILD_DIR=$${BUILD_DIR}
+	docker-compose run --user=$${RUN_AS_USER:-$$(id -u):$$(id -g)} --rm build \
+		make $(MFLAGS) --makefile=$(makefile) $@ $(MAKEOVERRIDES) USE_DOCKER= _BUILD_DIR=$${BUILD_DIR}
 
 else ###############################################################################################
 _BUILD_DIR := $(build_dir)
