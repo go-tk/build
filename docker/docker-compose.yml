@@ -3,13 +3,4 @@ services:
   build:
     build:
       context: context
-      cache_from:
-        - ${COMPOSE_PROJECT_NAME}-build:latest
     image: ${COMPOSE_PROJECT_NAME}-build:latest
-    volumes:
-      - type: bind
-        source: ../..
-        target: /data
-    environment:
-      - GOCACHE=/data/${BUILD_DIR}/cache
-      - GOMODCACHE=/data/${BUILD_DIR}/mod-cache

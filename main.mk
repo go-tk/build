@@ -11,12 +11,19 @@ override targets := $(or $(MAKECMDGOALS),$(.DEFAULT_GOAL))
 .PHONY: $(targets)
 .ONESHELL:
 $(targets):
-	@export BUILD_DIR=$(build_dir)/docker
+	@BUILD_DIR=$(build_dir)/docker
 	export COMPOSE_FILE=$${BUILD_DIR}/docker-compose.yml$${COMPOSE_FILE:+$${COMPOSE_PATH_SEPARATOR:-:}$${COMPOSE_FILE}}
 	export COMPOSE_PROJECT_NAME=$${COMPOSE_PROJECT_NAME:-$(notdir $(CURDIR))}
 	trap 'docker-compose down --rmi=local --volumes --remove-orphans' EXIT
 	docker-compose build
-	docker-compose run --rm --user=$${RUN_AS_USER:-$$(id -u):$$(id -g)} -e MAKEFLAGS="$${MAKEFLAGS}" build \
+	docker-compose run --rm \
+		--user=$${RUN_AS_USER:-$$(id -u):$$(id -g)} \
+		--workdir=/data \
+		--volume=$(CURDIR):/data \
+		-e MAKEFLAGS="$${MAKEFLAGS}" \
+		-e GOCACHE=/data/$${BUILD_DIR}/cache \
+		-e GOMODCACHE=/data/$${BUILD_DIR}/mod-cache \
+		build \
 		make --makefile=$(makefile) $@ USE_DOCKER= _BUILD_DIR=$${BUILD_DIR}
 
 else ###############################################################################################
