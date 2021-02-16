@@ -10,21 +10,27 @@ override targets := $(or $(MAKECMDGOALS),$(.DEFAULT_GOAL))
 
 .PHONY: $(targets)
 .ONESHELL:
+$(targets): override build_dir := $(build_dir)/docker
 $(targets):
-	@BUILD_DIR=$(build_dir)/docker
-	export COMPOSE_FILE=$${BUILD_DIR}/docker-compose.yml$${COMPOSE_FILE:+$${COMPOSE_PATH_SEPARATOR:-:}$${COMPOSE_FILE}}
-	export COMPOSE_PROJECT_NAME=$${COMPOSE_PROJECT_NAME:-$(notdir $(CURDIR))}
+	@export COMPOSE_FILE=$(build_dir)/docker-compose.yml$(if $(COMPOSE_FILE),$(or $(COMPOSE_PATH_SEPARATOR),:)$(COMPOSE_FILE))
+	export COMPOSE_PROJECT_NAME=$(or $(COMPOSE_PROJECT_NAME),$(notdir $(CURDIR)))
 	trap 'docker-compose down --rmi=local --volumes --remove-orphans' EXIT
-	docker-compose build
+	docker-compose build --build-arg ALPINE_PACKAGES='bash make curl git gcc musl-dev $(ALPINE_PACKAGES)'
 	docker-compose run --rm \
-		--user=$${RUN_AS_USER:-$$(id -u):$$(id -g)} \
+		--user=$(or $(RUN_AS_USER),$$(id -u):$$(id -g)) \
 		--workdir=/data \
 		--volume=$(CURDIR):/data \
 		-e MAKEFLAGS="$${MAKEFLAGS}" \
-		-e GOCACHE=/data/$${BUILD_DIR}/cache \
-		-e GOMODCACHE=/data/$${BUILD_DIR}/mod-cache \
+		-e GOCACHE=/data/$(build_dir)/cache \
+		-e GOMODCACHE=/data/$(build_dir)/mod-cache \
 		build \
-		make --makefile=$(makefile) $@ USE_DOCKER= _BUILD_DIR=$${BUILD_DIR}
+		make --makefile=$(makefile) $@ \
+			USE_DOCKER= \
+			COMPOSE_FILE= \
+			COMPOSE_PATH_SEPARATOR= \
+			COMPOSE_PROJECT_NAME= \
+			ALPINE_PACKAGES= \
+			_BUILD_DIR=$(build_dir)
 
 else ###############################################################################################
 _BUILD_DIR := $(build_dir)
