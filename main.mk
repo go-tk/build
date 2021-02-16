@@ -15,7 +15,7 @@ $(targets):
 	@export COMPOSE_FILE=$(build_dir)/docker-compose.yml$(if $(COMPOSE_FILE),$(or $(COMPOSE_PATH_SEPARATOR),:)$(COMPOSE_FILE))
 	export COMPOSE_PROJECT_NAME=$(or $(COMPOSE_PROJECT_NAME),$(notdir $(CURDIR)))
 	trap 'docker-compose down --rmi=local --volumes --remove-orphans' EXIT
-	docker-compose build --build-arg ALPINE_PACKAGES='bash make curl git gcc musl-dev $(ALPINE_PACKAGES)'
+	docker-compose build --build-arg ALPINE_PACKAGES='bash make gcc musl-dev $(ALPINE_PACKAGES)'
 	docker-compose run --rm \
 		--user=$(or $(RUN_AS_USER),$$(id -u):$$(id -g)) \
 		--workdir=/data \
