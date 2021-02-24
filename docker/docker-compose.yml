@@ -3,4 +3,4 @@ services:
   build:
     build:
       context: context
-    image: ${COMPOSE_PROJECT_NAME}-build:latest
+    image: ${COMPOSE_PROJECT_NAME}:latest

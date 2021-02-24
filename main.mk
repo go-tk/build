@@ -10,10 +10,9 @@ override targets := $(or $(MAKECMDGOALS),$(.DEFAULT_GOAL))
 
 .PHONY: $(targets)
 .ONESHELL:
-$(targets): override build_dir := $(build_dir)/docker
 $(targets):
-	@export COMPOSE_FILE=$(build_dir)/docker-compose.yml$(if $(COMPOSE_FILE),$(or $(COMPOSE_PATH_SEPARATOR),:)$(COMPOSE_FILE))
-	export COMPOSE_PROJECT_NAME=$(or $(COMPOSE_PROJECT_NAME),$(notdir $(CURDIR)))
+	@export COMPOSE_FILE=$(build_dir)/docker/docker-compose.yml$(if $(COMPOSE_FILE),$(or $(COMPOSE_PATH_SEPARATOR),:)$(COMPOSE_FILE))
+	export COMPOSE_PROJECT_NAME=$(or $(COMPOSE_PROJECT_NAME),$(notdir $(CURDIR))-build)
 	trap 'docker-compose down --rmi=local --volumes --remove-orphans' EXIT
 	docker-compose build --build-arg ALPINE_PACKAGES='bash make gcc musl-dev $(ALPINE_PACKAGES)'
 	docker-compose run --rm \
@@ -21,19 +20,18 @@ $(targets):
 		--workdir=/data \
 		--volume=$(CURDIR):/data \
 		-e MAKEFLAGS="$${MAKEFLAGS}" \
-		-e GOCACHE=/data/$(build_dir)/cache \
-		-e GOMODCACHE=/data/$(build_dir)/mod-cache \
+		-e GOCACHE=/data/$(build_dir)/go/cache \
+		-e GOMODCACHE=/data/$(build_dir)/go/mod-cache \
 		build \
 		make --makefile=$(makefile) $@ \
 			USE_DOCKER= \
 			COMPOSE_FILE= \
 			COMPOSE_PATH_SEPARATOR= \
 			COMPOSE_PROJECT_NAME= \
-			ALPINE_PACKAGES= \
-			_BUILD_DIR=$(build_dir)
+			ALPINE_PACKAGES=
 
 else ###############################################################################################
-_BUILD_DIR := $(build_dir)
+override os_arch := $(shell go env GOOS)_$(shell go env GOARCH)
 
 ## targets:
 
@@ -63,7 +61,7 @@ endif
 ##    Format source code with command 'goimports'.
 ##    Custom command-line options could be provided via variable 'GOIMPORTS_FLAGS'.
 .ONESHELL:
-fmt: | $(_BUILD_DIR)/bin/goimports
+fmt: | $(build_dir)/go/bin/goimports.$(os_arch)
 	@
 ifdef PRE_FMT
 	$(PRE_FMT)
@@ -73,8 +71,11 @@ ifdef POST_FMT
 	$(POST_FMT)
 endif
 
-$(_BUILD_DIR)/bin/goimports: | $(_BUILD_DIR)/bin/go.mod
-	@cd $(@D); go build -o $(@F) golang.org/x/tools/cmd/goimports
+.ONESHELL:
+$(build_dir)/go/bin/goimports.$(os_arch): | $(build_dir)/go/bin/go.mod
+	@cd $(@D)
+	go get golang.org/x/tools/cmd/goimports
+	go build -o $(@F) golang.org/x/tools/cmd/goimports
 
 .PHONY: lint
 ##
@@ -82,7 +83,7 @@ $(_BUILD_DIR)/bin/goimports: | $(_BUILD_DIR)/bin/go.mod
 ##    Check the coding style with command 'golint'.
 ##    Custom command-line options could be provided via variable 'GOLINT_FLAGS'.
 .ONESHELL:
-lint: | $(_BUILD_DIR)/bin/golint
+lint: | $(build_dir)/go/bin/golint.$(os_arch)
 	@
 ifdef PRE_LINT
 	$(PRE_LINT)
@@ -92,8 +93,11 @@ ifdef POST_LINT
 	$(POST_LINT)
 endif
 
-$(_BUILD_DIR)/bin/golint: | $(_BUILD_DIR)/bin/go.mod
-	@cd $(@D); go build -o $(@F) golang.org/x/lint/golint
+.ONESHELL:
+$(build_dir)/go/bin/golint.$(os_arch): | $(build_dir)/go/bin/go.mod
+	@cd $(@D)
+	go get golang.org/x/lint/golint
+	go build -o $(@F) golang.org/x/lint/golint
 
 .PHONY: vet
 ##
@@ -151,7 +155,7 @@ help: override .SHELLFLAGS := $(subst -o xtrace,,$(.SHELLFLAGS))
 help:
 	@sed -n 's/^##//p' $(makefile)
 
-$(_BUILD_DIR)/bin/go.mod:
+$(build_dir)/go/bin/go.mod:
 	@mkdir -p $(@D); cd $(@D); go mod init bin
 
 ##
