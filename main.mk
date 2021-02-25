@@ -14,7 +14,7 @@ $(targets):
 	@export COMPOSE_FILE=$(build_dir)/docker/docker-compose.yml$(if $(COMPOSE_FILE),$(or $(COMPOSE_PATH_SEPARATOR),:)$(COMPOSE_FILE))
 	export COMPOSE_PROJECT_NAME=$(or $(COMPOSE_PROJECT_NAME),$(notdir $(CURDIR))-build)
 	trap 'docker-compose down --rmi=local --volumes --remove-orphans' EXIT
-	docker-compose build --build-arg ALPINE_PACKAGES='bash make gcc musl-dev $(ALPINE_PACKAGES)'
+	docker-compose build --build-arg ALPINE_PACKAGES='bash coreutils findutils grep sed make gcc musl-dev $(ALPINE_PACKAGES)'
 	docker-compose run --rm \
 		--user=$(or $(RUN_AS_USER),$$(id -u):$$(id -g)) \
 		--workdir=/data \
@@ -61,18 +61,20 @@ endif
 ##    Format source code with command 'goimports'.
 ##    Custom command-line options could be provided via variable 'GOIMPORTS_FLAGS'.
 .ONESHELL:
-fmt: | $(build_dir)/go/bin/goimports.$(os_arch)
+fmt: | $(build_dir)/go/tools/goimports.$(os_arch)
 	@
 ifdef PRE_FMT
 	$(PRE_FMT)
 endif
-	go fmt -n ./... | grep -o '[^ ]\+.go$$' | xargs $| -format-only -l -w $(GOIMPORTS_FLAGS)
+	go fmt -n ./... |
+		grep --perl-regexp --only-matching --null-data '(?<= -l -w ).+(?=\n)' |
+		xargs --null $| -format-only -l -w $(GOIMPORTS_FLAGS)
 ifdef POST_FMT
 	$(POST_FMT)
 endif
 
 .ONESHELL:
-$(build_dir)/go/bin/goimports.$(os_arch): | $(build_dir)/go/bin/go.mod
+$(build_dir)/go/tools/goimports.$(os_arch): | $(build_dir)/go/tools/go.mod
 	@cd $(@D)
 	go get golang.org/x/tools/cmd/goimports
 	go build -o $(@F) golang.org/x/tools/cmd/goimports
@@ -83,18 +85,19 @@ $(build_dir)/go/bin/goimports.$(os_arch): | $(build_dir)/go/bin/go.mod
 ##    Check the coding style with command 'golint'.
 ##    Custom command-line options could be provided via variable 'GOLINT_FLAGS'.
 .ONESHELL:
-lint: | $(build_dir)/go/bin/golint.$(os_arch)
+lint: | $(build_dir)/go/tools/golint.$(os_arch)
 	@
 ifdef PRE_LINT
 	$(PRE_LINT)
 endif
-	$| $(filter-out -set_exit_status,$(GOLINT_FLAGS)) ./... | $(build_dir)/scripts/golint-filter.bash
+	$| $(filter-out -set_exit_status,$(GOLINT_FLAGS)) ./... |
+		$(build_dir)/scripts/golint-filter.bash
 ifdef POST_LINT
 	$(POST_LINT)
 endif
 
 .ONESHELL:
-$(build_dir)/go/bin/golint.$(os_arch): | $(build_dir)/go/bin/go.mod
+$(build_dir)/go/tools/golint.$(os_arch): | $(build_dir)/go/tools/go.mod
 	@cd $(@D)
 	go get golang.org/x/lint/golint
 	go build -o $(@F) golang.org/x/lint/golint
@@ -153,10 +156,10 @@ endif
 ##    display this help.
 help: override .SHELLFLAGS := $(subst -o xtrace,,$(.SHELLFLAGS))
 help:
-	@sed -n 's/^##//p' $(makefile)
+	@sed --silent 's/^##//p' $(makefile)
 
-$(build_dir)/go/bin/go.mod:
-	@mkdir -p $(@D); cd $(@D); go mod init bin
+$(build_dir)/go/tools/go.mod:
+	@mkdir --parents $(@D); cd $(@D); go mod init tools
 
 ##
 ##example:
